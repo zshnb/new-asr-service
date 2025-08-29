@@ -30,31 +30,32 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
     def submit_all_transcription_tasks():
         def sort_and_concat():
             result = []
-            for item_dict in results:
-                # 按数字顺序排序key（提取文件名中的数字部分）
+            keys = []
+            for item_dict in tasks_results:
                 def extract_number(filename):
-                    # 提取文件名中的数字部分
                     import re
                     match = re.search(r'(\d+)', filename)
                     return int(match.group(1)) if match else 0
 
-                sorted_keys = sorted(item_dict.keys(), key=extract_number)
+                keys.append(extract_number(list(item_dict.keys())[0]))
 
-                # 按排序后的key顺序获取value并拼接
-                for key in sorted_keys:
-                    result.extend(item_dict[key])
+            keys = sorted(keys)
+
+            for key in keys:
+                key_value = list(filter(lambda x: list(x.keys())[0] == f'{key}.mp3', tasks_results))
+                result.append(key_value)
 
             return result
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             logging.info(f"[submit_all_transcription_tasks] executing tasks count: {len(tasks)}")
             futures = [executor.submit(task) for task in tasks]
-            results = [future.result() for future in futures]
+            tasks_results = [future.result() for future in futures]
 
         return sort_and_concat()
-    def do_transcription(segment_file: str):
+    def do_transcription(segment_file: str, index: int):
         return {
-            f'{os.path.basename(segment_file)}': transcriber.transcribe_segment(segment_file, transcribe_option)
+            f'{os.path.basename(segment_file)}': transcriber.transcribe_segment(segment_file, segment_duration * index, transcribe_option)
         }
 
     audio_file = download_audio()
@@ -75,7 +76,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
         'min_speech_duration_ms': 160,
     }, {'zh': True, 'default': False})
 
-    tasks = [lambda segment=segment: do_transcription(segment) for segment in audio_segments]
+    tasks = [lambda segment=segment: do_transcription(segment, index) for index, segment in enumerate(audio_segments)]
     return submit_all_transcription_tasks()
 
 if __name__ == '__main__':

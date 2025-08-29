@@ -25,7 +25,7 @@ class Transcriber:
         self.log_prob_low_threshold = -0.7
 
     @timing
-    def transcribe_segment(self, segment_file: str, options: TranscribeOption):
+    def transcribe_segment(self, segment_file: str, offset: int, options: TranscribeOption):
         logging.info(f'transcribe_segment: {segment_file} with options: {options}')
         segments, info = self.model.transcribe(
             segment_file,
@@ -40,7 +40,7 @@ class Transcriber:
 
         results = []
         for segment in segments:
-            results.append("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+            results.append("[%.2fs -> %.2fs] %s" % (segment.start + offset, segment.end + offset, segment.text))
             # seg_word = []
             # for word in segment_file.words:
             #     seg_word.append({'start': word.start, 'end': word.end, 'word': word.word})
