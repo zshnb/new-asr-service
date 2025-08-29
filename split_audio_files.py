@@ -52,7 +52,7 @@ def split_audio_file_into_segments(audio_file, duration, segment_duration_second
     audio_dir = os.path.dirname(audio_file)
     if os.path.exists(f'{audio_dir}/segments'):
         return [f'{audio_dir}/segments/{x}' for x in os.listdir(f'{audio_dir}/segments')]
-    os.mkdir(f"{audio_dir}/segments")
+    os.makedirs(f"{audio_dir}/segments", exist_ok=True)
     audio_suffix = os.path.splitext(audio_file)[1] # already contains .(dot)
     merge_last_two_segments = False
     if duration % segment_duration_seconds < 100:

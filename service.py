@@ -1,5 +1,7 @@
 import argparse
+import datetime
 import hashlib
+import json
 import logging
 import os
 import subprocess
@@ -19,7 +21,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
         if os.path.exists(audio_file):
             logging.info(f"[download_audio] audio url {audio_url} already exists, skip download")
             return audio_file
-        os.mkdir(os.path.dirname(audio_file))
+        os.makedirs(os.path.dirname(audio_file), exist_ok=True)
         subprocess.run(['ffmpeg', '-i', audio_url, audio_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         logging.info(f"[download_audio] audio_file: {audio_file}")
         return audio_file
@@ -85,4 +87,9 @@ if __name__ == '__main__':
     parser.add_argument("--audio_url", type=str, help="Audio url")
     args = parser.parse_args()
 
-    handle_asr_task(args.audio_url, args.num_workers, args.segment_duration)
+    result = handle_asr_task(args.audio_url, args.num_workers, args.segment_duration)
+    os.makedirs("test_data", exist_ok=True)
+    output_file = f"test_data/{datetime.datetime.now()}.txt"
+    with open(output_file, 'w') as f:
+        f.write(json.dumps(result))
+        logging.info(f"write asr result: {output_file}")
