@@ -91,8 +91,9 @@ if __name__ == '__main__':
 
     result = handle_asr_task(args.audio_url, args.num_workers, args.segment_duration)
     os.makedirs("test_data", exist_ok=True)
-    output_file = f"test_data/{floor(datetime.datetime.now().timestamp())}.txt"
+    output_file = f"test_data/{floor(datetime.datetime.now().timestamp())}_{args.num_workers}_{args.segment_duration}.txt"
     with open(output_file, 'w') as f:
         for item in result:
-            f.write(f"{item}\n")
+            for i in item:
+                f.write(f"{i}\n")
         logging.info(f"write asr result: {output_file}")
