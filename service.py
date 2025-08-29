@@ -37,13 +37,13 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
                     match = re.search(r'(\d+)', filename)
                     return int(match.group(1)) if match else 0
 
-                keys.append(extract_number(list(item_dict.keys())[0]))
+                keys.append(extract_number(item_dict['segment']))
 
             keys = sorted(keys)
 
             for key in keys:
-                key_value = list(filter(lambda x: list(x.keys())[0] == f'{key}.mp3', tasks_results))
-                result.append(key_value)
+                filtered_dict = list(filter(lambda x: x['segment'] == f'{key}.mp3', tasks_results))[0]
+                result.append(filtered_dict['transcription_result'])
 
             return result
 
@@ -53,9 +53,11 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
             tasks_results = [future.result() for future in futures]
 
         return sort_and_concat()
-    def do_transcription(segment_file: str, index: int):
+    def do_transcription(segment_file: str):
+        index = int(os.path.basename(segment_file).split('.')[0])
         return {
-            f'{os.path.basename(segment_file)}': transcriber.transcribe_segment(segment_file, segment_duration * index, transcribe_option)
+            'segment': os.path.basename(segment_file),
+            'transcription_result': transcriber.transcribe_segment(segment_file, segment_duration * index, transcribe_option)
         }
 
     audio_file = download_audio()
@@ -76,7 +78,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
         'min_speech_duration_ms': 160,
     }, {'zh': True, 'default': False})
 
-    tasks = [lambda segment=segment: do_transcription(segment, index) for index, segment in enumerate(audio_segments)]
+    tasks = [lambda segment=segment: do_transcription(segment) for segment in audio_segments]
     return submit_all_transcription_tasks()
 
 if __name__ == '__main__':
