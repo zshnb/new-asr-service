@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 from concurrent.futures.thread import ThreadPoolExecutor
+from math import floor
 
 from split_audio_files import run as split_audio, RequestData
 from transcriber import Transcriber, TranscribeOption
@@ -27,7 +28,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
         return audio_file
 
     def submit_all_transcription_tasks():
-        def sort_and_concat_numeric_keys():
+        def sort_and_concat():
             result = []
             for item_dict in results:
                 # 按数字顺序排序key（提取文件名中的数字部分）
@@ -43,6 +44,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
                 for key in sorted_keys:
                     result.extend(item_dict[key])
 
+            logging.info(f"[sort_and_concat] result: {result}")
             return result
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -50,8 +52,9 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
             futures = [executor.submit(task) for task in tasks]
             # 等待所有任务完成
             results = [future.result() for future in futures]
+            logging.info(f"[submit_all_transcription_tasks] result: {results}")
 
-        return sort_and_concat_numeric_keys()
+        return sort_and_concat()
     def do_transcription(segment_file: str):
         result = transcriber.transcribe_segment(segment_file, transcribe_option)
         return {
@@ -89,7 +92,7 @@ if __name__ == '__main__':
 
     result = handle_asr_task(args.audio_url, args.num_workers, args.segment_duration)
     os.makedirs("test_data", exist_ok=True)
-    output_file = f"test_data/{datetime.datetime.now().timestamp()}.txt"
+    output_file = f"test_data/{floor(datetime.datetime.now().timestamp())}.txt"
     with open(output_file, 'w') as f:
         for item in result:
             f.write(f"{item}\n")
