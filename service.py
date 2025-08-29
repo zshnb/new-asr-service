@@ -44,21 +44,17 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
                 for key in sorted_keys:
                     result.extend(item_dict[key])
 
-            logging.info(f"[sort_and_concat] result: {result}")
             return result
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             logging.info(f"[submit_all_transcription_tasks] executing tasks count: {len(tasks)}")
             futures = [executor.submit(task) for task in tasks]
-            # 等待所有任务完成
             results = [future.result() for future in futures]
-            logging.info(f"[submit_all_transcription_tasks] result: {results}")
 
         return sort_and_concat()
     def do_transcription(segment_file: str):
-        result = transcriber.transcribe_segment(segment_file, transcribe_option)
         return {
-            f'{os.path.basename(segment_file)}': result
+            f'{os.path.basename(segment_file)}': transcriber.transcribe_segment(segment_file, transcribe_option)
         }
 
     audio_file = download_audio()
@@ -79,7 +75,7 @@ def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
         'min_speech_duration_ms': 160,
     }, {'zh': True, 'default': False})
 
-    tasks = [lambda: do_transcription(segment) for segment in audio_segments]
+    tasks = [lambda segment=segment: do_transcription(segment) for segment in audio_segments]
     return submit_all_transcription_tasks()
 
 if __name__ == '__main__':
