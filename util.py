@@ -1,3 +1,4 @@
+import logging
 import time
 import functools
 from typing import Callable, Any
@@ -10,7 +11,7 @@ def timing(func: Callable) -> Callable:
         end_time = time.time()
 
         execution_time = end_time - start_time
-        print(f"函数 '{func.__name__}' 执行时间: {execution_time:.4f} 秒")
+        logging.info(f"function '{func.__name__}' cost: {execution_time:.4f}s")
 
         return result
 

@@ -1,7 +1,6 @@
 import argparse
 import datetime
 import hashlib
-import json
 import logging
 import os
 import subprocess
@@ -90,7 +89,8 @@ if __name__ == '__main__':
 
     result = handle_asr_task(args.audio_url, args.num_workers, args.segment_duration)
     os.makedirs("test_data", exist_ok=True)
-    output_file = f"test_data/{datetime.datetime.now()}.txt"
+    output_file = f"test_data/{datetime.datetime.now().timestamp()}.txt"
     with open(output_file, 'w') as f:
-        f.write(json.dumps(result))
+        for item in result:
+            f.write(f"{item}\n")
         logging.info(f"write asr result: {output_file}")
