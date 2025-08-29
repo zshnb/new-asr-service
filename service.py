@@ -12,6 +12,7 @@ from transcriber import Transcriber, TranscribeOption
 from util import timing
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 @timing
 def handle_asr_task(audio_url: str, num_workers: int, segment_duration: int):
     def download_audio():
