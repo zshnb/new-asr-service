@@ -20,7 +20,7 @@ class RequestData:
 
 
 def create_clip(raw_audio: str, slice_audio: str, clipFromSecond: int, clipDuration: int):
-    cmd_str = f"ffmpeg -y -ss {clipFromSecond} -t {clipDuration} -i {raw_audio} -vn {slice_audio}"
+    cmd_str = f"ffmpeg -y -ss {clipFromSecond} -t {clipDuration} -i {raw_audio} -vn {slice_audio} > /dev/null 2>&1"
     logging.info(f"[create_clip] command: {cmd_str}")
 
     try:
@@ -49,8 +49,9 @@ def split_audio_file_into_segments(audio_file, duration, segment_duration_second
         f"Splitting audio file {audio_file} into segments of {segment_duration_seconds} seconds each (total: {duration} seconds)")
     segments = []
     index = 0
-
     audio_dir = os.path.dirname(audio_file)
+    if os.path.exists(f'{audio_dir}/segments'):
+        return [f'{audio_dir}/segments/{x}' for x in os.listdir(f'{audio_dir}/segments')]
     os.mkdir(f"{audio_dir}/segments")
     audio_suffix = os.path.splitext(audio_file)[1] # already contains .(dot)
     merge_last_two_segments = False
@@ -63,13 +64,13 @@ def split_audio_file_into_segments(audio_file, duration, segment_duration_second
             logging.info(f"Merging last two segments because the last segment is too short")
             segment_file = f"{audio_dir}/segments/{index}{audio_suffix}"
             create_clip(audio_file, segment_file, i, segment_duration_seconds + 100)
-            segments.append(f"audio-clip-{i}{audio_suffix}")
+            segments.append(segment_file)
             break
 
         logging.info(f"Creating segment {i} to {i + segment_duration_seconds} seconds")
         segment_file = f"{audio_dir}/segments/{index}{audio_suffix}"
         create_clip(audio_file, segment_file, i, segment_duration_seconds + overlap_seconds)
-        segments.append(f"audio-clip-{i}{audio_suffix}")
+        segments.append(segment_file)
         index += 1
     return segments
 
